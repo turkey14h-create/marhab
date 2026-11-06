@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة السياحة العُمانية | بوابة الكنوز الأصيلة</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            coral: '#E05A47',
+                            'coral-dark': '#c84634',
+                            navy: '#1A3644',
+                            'navy-dark': '#10232e',
+                            sand: '#F7F4EF'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet JS Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #F7F4EF;
+            color: #1A3644;
+            scroll-behavior: smooth;
+        }
+
+        /* Glassmorphism styling */
+        .glass-navy {
+            background: rgba(26, 54, 68, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 90, 71, 0.2);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(26, 54, 68, 0.08);
+        }
+
+        .shadow-custom {
+            box-shadow: 0 10px 30px -5px rgba(26, 54, 68, 0.12);
+        }
+
+        /* Custom Leaflet Map styling */
+        #omanMap {
+            height: 480px;
+            width: 100%;
+            border-radius: 1.5rem;
+            z-index: 10;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1A3644;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E05A47;
+            border-radius: 4px;
+        }
+
+        /* Animated Tab transition */
+        .page-tab {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .page-tab.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Leaflet popup customization */
+        .leaflet-popup-content-wrapper {
+            background: #1A3644 !important;
+            color: #ffffff !important;
+            border-radius: 12px !important;
+            direction: rtl;
+            font-family: 'Tajawal', sans-serif;
+            border: 1px solid #E05A47;
+        }
+        .leaflet-popup-tip {
+            background: #1A3644 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Official Banner Header -->
+    <header class="bg-brand-navy text-white border-b border-brand-coral/30 sticky top-0 z-50 shadow-lg">
+        <!-- Top Institutional Logos Header -->
+        <div class="bg-brand-navy-dark py-2 px-4 border-b border-white/10 text-xs text-slate-300">
+            <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+                
+                <!-- Official Entities Logos (Visual Text Badges & SVGs) -->
+                <div class="flex items-center gap-6">
+                    <!-- Ministry of Heritage and Tourism -->
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-landmark text-brand-coral"></i>
+                        <span class="font-bold text-white">وزارة التراث والسياحة</span>
+                    </div>
+
+                    <!-- Oman Vision 2040 -->
+                    <div class="hidden sm:flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/10">
+                        <span class="font-black text-brand-coral">رؤية عُمان</span>
+                        <span class="font-bold text-white">2040</span>
+                    </div>
+
+                    <!-- Marhab App -->
+                    <div class="flex items-center gap-1.5 text-amber-400 font-bold">
+                        <i class="fa-solid fa-[#fa-hand-wave]"></i>
+                        <span>منصة مَــرْحَبْ</span>
+                    </div>
+                </div>
+
+                <!-- National Motto -->
+                <div class="hidden lg:flex items-center gap-2 text-slate-400">
+                    <i class="fa-solid fa-flag text-brand-coral"></i>
+                    <span>بوابة السياحة الرسمية - سلطنة عُمان</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation Bar -->
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            
+            <!-- Project Brand Logo (SVG Created from User Image) -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchPage('home')">
+                <div class="w-12 h-12 rounded-xl bg-brand-navy border-2 border-brand-coral p-1.5 shadow-md flex items-center justify-center hover:scale-105 transition-transform">
+                    <!-- Accurate SVG Logo -->
+                    <svg viewBox="0 0 500 500" class="w-full h-full">
+                        <path d="M 60,330 L 110,240 L 160,330 Z" fill="#E05A47" />
+                        <path d="M 120,330 L 220,160 L 275,255 L 235,255 L 205,205 L 150,300 L 205,300 L 185,330 Z" fill="#E05A47" />
+                        <path d="M 235,330 L 335,160 L 445,160 L 445,220 L 365,220 L 365,265 L 445,265 L 445,330 L 340,330 L 290,250 L 245,330 Z" fill="#E05A47" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wide text-white">اكتشف <span class="text-brand-coral">عُمان</span></h1>
+                    <p class="text-[10px] text-slate-300">Oman Tourism Portal</p>
+                </div>
+            </div>
+
+            <!-- Navigation Links (5 Pages Switcher) -->
+            <nav class="hidden lg:flex items-center gap-1 font-medium text-sm">
+                <button onclick="switchPage('home')" id="nav-home" class="nav-btn px-4 py-2 rounded-xl transition-all duration-200 bg-brand-coral text-white font-bold">
+                    الرئيسية
+                </button>
+                <button onclick="switchPage('companies')" id="nav-companies" class="nav-btn px-4 py-2 rounded-xl transition-all duration-200 hover:bg-white/10 text-slate-200">
+                    الشركات السياحية
+                </button>
+                <button onclick="switchPage('transport')" id="nav-transport" class="nav-btn px-4 py-2 rounded-xl transition-all duration-200 hover:bg-white/10 text-slate-200">
+                    النقل والمواصلات
+                </button>
+                <button onclick="switchPage('guides')" id="nav-guides" class="nav-btn px-4 py-2 rounded-xl transition-all duration-200 hover:bg-white/10 text-slate-200">
+                    المرشدين السياحيين
+                </button>
+                <button onclick="switchPage('stay-heritage')" id="nav-stay-heritage" class="nav-btn px-4 py-2 rounded-xl transition-all duration-200 hover:bg-white/10 text-slate-200">
+                    الفنادق والآثار
+                </button>
+            </nav>
+
+            <!-- Investor Portal Button Header CTA -->
+            <div class="flex items-center gap-3">
+                <button onclick="openInvestorModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-coral to-amber-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-brand-coral/20 hover:scale-105 transition-all">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>لوحة المستثمرين</span>
+                </button>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuToggle" class="lg:hidden text-2xl text-white focus:outline-none px-2">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Navigation -->
+        <div id="mobileDropdown" class="hidden lg:hidden bg-brand-navy-dark px-4 py-4 space-y-2 border-t border-white/10">
+            <button onclick="switchPage('home')" class="w-full text-right px-4 py-2.5 rounded-lg text-white font-bold hover:bg-brand-coral">الرئيسية</button>
+            <button onclick="switchPage('companies')" class="w-full text-right px-4 py-2.5 rounded-lg text-slate-200 hover:bg-white/10">الشركات السياحية</button>
+            <button onclick="switchPage('transport')" class="w-full text-right px-4 py-2.5 rounded-lg text-slate-200 hover:bg-white/10">النقل والمواصلات</button>
+            <button onclick="switchPage('guides')" class="w-full text-right px-4 py-2.5 rounded-lg text-slate-200 hover:bg-white/10">المرشدين السياحيين</button>
+            <button onclick="switchPage('stay-heritage')" class="w-full text-right px-4 py-2.5 rounded-lg text-slate-200 hover:bg-white/10">الفنادق والآثار</button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow">
+        
+        <!-- ================= PAGE 1: HOME (الرئيسية) ================= -->
+        <div id="page-home" class="page-tab active">
+            
+            <!-- Hero Banner Section -->
+            <section class="relative bg-brand-navy text-white py-16 px-4 overflow-hidden">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#E05A47_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                <div class="max-w-7xl mx-auto relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+                    
+                    <div class="space-y-6 text-right">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-coral/20 text-brand-coral border border-brand-coral/30 text-xs font-bold">
+                            <i class="fa-solid fa-gem"></i>
+                            <span>سلطنة عُمان - أرض الأصالة والمستقبل</span>
+                        </div>
+                        
+                        <h2 class="text-4xl sm:text-6xl font-black leading-tight">
+                            استكشف سحر الطبيعة <br>
+                            <span class="text-brand-coral">وعرَاقة التراث العُماني</span>
+                        </h2>
+
+                        <p class="text-slate-300 text-base leading-relaxed max-w-xl">
+                            منصة سياحية متكاملة تحت مظلة رؤية عُمان 2040، تتيح لك التخطيط لرحلتك، حجز المرشدين، استكشاف القلاع التاريخية، والاستفادة من أفضل خدمات النقل والإقامة.
+                        </p>
+
+                        <!-- Fast Action Buttons -->
+                        <div class="flex flex-wrap gap-4 pt-2">
+                            <button onclick="switchPage('stay-heritage')" class="px-6 py-3.5 rounded-xl bg-brand-coral hover:bg-brand-coral-dark text-white font-bold text-sm shadow-lg transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-fort-awesome"></i>
+                                <span>المواقع الأثرية والنزل</span>
+                            </button>
+                            <button onclick="switchPage('companies')" class="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/20 transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-compass"></i>
+                                <span>الشركات السياحية</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hero Visual Card -->
+                    <div class="relative flex justify-center">
+                        <div class="w-full max-w-lg glass-navy rounded-3xl p-6 border border-brand-coral/30 shadow-2xl space-y-4">
+                            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-brand-coral text-white flex items-center justify-center font-bold text-xl">
+                                        <i class="fa-solid fa-map-location-dot"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-white">وجهات سلطنة عُمان</h4>
+                                        <p class="text-xs text-slate-300">مباشر من مسقط، صلالة، ونزوى</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">مواسم هادئة وممتعة</span>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-3 text-center">
+                                <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                    <span class="block text-xl font-black text-brand-coral">+500</span>
+                                    <span class="text-[11px] text-slate-300">موقع أثري</span>
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                    <span class="block text-xl font-black text-amber-400">100%</span>
+                                    <span class="text-[11px] text-slate-300">مرشدون مرخصون</span>
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                                    <span class="block text-xl font-black text-emerald-400">+120</span>
+                                    <span class="text-[11px] text-slate-300">شركة ونزل</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Map of Oman Section -->
+            <section class="py-12 px-4 max-w-7xl mx-auto">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-custom border border-brand-navy/10 space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                        <div>
+                            <div class="flex items-center gap-2 text-brand-coral font-bold text-xs">
+                                <i class="fa-solid fa-earth-asia"></i>
+                                <span>الخريطة التفاعلية الرسمية</span>
+                            </div>
+                            <h3 class="text-2xl sm:text-3xl font-black text-brand-navy">خريطة سلطنة عُمان السياحية</h3>
+                            <p class="text-slate-600 text-xs sm:text-sm">اضغط على دبابيس الموقع للاطلاع على أهم المعالم والمواقع الأثرية في مختلف المحافظات.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1.5 rounded-lg bg-brand-navy/5 text-brand-navy text-xs font-bold flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-brand-coral inline-block"></span> المعالم البارزة
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Leaflet Interactive Oman Map -->
+                    <div id="omanMap" class="shadow-inner border-2 border-brand-navy/10"></div>
+                </div>
+            </section>
+
+            <!-- 5 Core Categories Grid Section -->
+            <section class="py-12 px-4 max-w-7xl mx-auto">
+                <div class="text-center max-w-2xl mx-auto mb-10 space-y-2">
+                    <h2 class="text-xs font-black text-brand-coral uppercase tracking-widest">أقسام المنصة الرئيسية</h2>
+                    <h3 class="text-3xl font-black text-brand-navy">كل ما تحتاجه لرحلة عُمانية لا تُنسى</h3>
+                </div>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Category 1: Tourism Companies -->
+                    <div onclick="switchPage('companies')" class="glass-card p-6 rounded-2xl border border-brand-navy/10 hover:border-brand-coral cursor-pointer hover:-translate-y-1.5 transition-all group shadow-sm">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-navy text-brand-coral flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-brand-coral group-hover:text-white transition-all">
+                            <i class="fa-solid fa-building-flag"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-brand-navy mb-2">الشركات السياحية</h4>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-4">شركات تنظيم الرحلات والجولات البرية والبحرية المرخصة رسمياً في السلطنة.</p>
+                        <span class="text-brand-coral font-bold text-xs flex items-center gap-1 group-hover:gap-2 transition-all">
+                            <span>تصفح الشركات</span>
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </span>
+                    </div>
+
+                    <!-- Category 2: Transport -->
+                    <div onclick="switchPage('transport')" class="glass-card p-6 rounded-2xl border border-brand-navy/10 hover:border-brand-coral cursor-pointer hover:-translate-y-1.5 transition-all group shadow-sm">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-navy text-brand-coral flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-brand-coral group-hover:text-white transition-all">
+                            <i class="fa-solid fa-bus-simple"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-brand-navy mb-2">النقل والمواصلات</h4>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-4">خيارات التنقل السهل بين الولايات عبر الحافلات، التاكسي، وسيارات الدفع الرباعي.</p>
+                        <span class="text-brand-coral font-bold text-xs flex items-center gap-1 group-hover:gap-2 transition-all">
+                            <span>خيارات النقل</span>
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </span>
+                    </div>
+
+                    <!-- Category 3: Tour Guides -->
+                    <div onclick="switchPage('guides')" class="glass-card p-6 rounded-2xl border border-brand-navy/10 hover:border-brand-coral cursor-pointer hover:-translate-y-1.5 transition-all group shadow-sm">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-navy text-brand-coral flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-brand-coral group-hover:text-white transition-all">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-brand-navy mb-2">المرشدين السياحيين</h4>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-4">مرشدون عمانيون مرخصون ذوو خبرة واسعة في المسارات الجبلية والتاريخية.</p>
+                        <span class="text-brand-coral font-bold text-xs flex items-center gap-1 group-hover:gap-2 transition-all">
+                            <span>احجز مرشدك</span>
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </span>
+                    </div>
+
+                    <!-- Category 4: Hotels & Heritage Inns -->
+                    <div onclick="switchPage('stay-heritage')" class="glass-card p-6 rounded-2xl border border-brand-navy/10 hover:border-brand-coral cursor-pointer hover:-translate-y-1.5 transition-all group shadow-sm">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-navy text-brand-coral flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-brand-coral group-hover:text-white transition-all">
+                            <i class="fa-solid fa-hotel"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-brand-navy mb-2">الفنادق والنزل التراثية</h4>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-4">إقامات أصيلة في بيوت تراثية ومزارع قديمة وفنادق فاخرة ذات إطلالات ساحرة.</p>
+                        <span class="text-brand-coral font-bold text-xs flex items-center gap-1 group-hover:gap-2 transition-all">
+                            <span>استكشف الإقامات</span>
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </span>
+                    </div>
+
+                    <!-- Category 5: Archaeological Sites -->
+                    <div onclick="switchPage('stay-heritage')" class="glass-card p-6 rounded-2xl border border-brand-navy/10 hover:border-brand-coral cursor-pointer hover:-translate-y-1.5 transition-all group shadow-sm sm:col-span-2 lg:col-span-1">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-navy text-brand-coral flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-brand-coral group-hover:text-white transition-all">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-brand-navy mb-2">المواقع الأثرية والقلاع</h4>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-4">قلاع نخل ونزوى وبهلاء وجبرين والمقابر الأثرية المدرجة ضمن اليونسكو.</p>
+                        <span class="text-brand-coral font-bold text-xs flex items-center gap-1 group-hover:gap-2 transition-all">
+                            <span>شاهد الآثار</span>
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </span>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Big Investor Portal Banner -->
+            <section class="py-12 px-4 max-w-7xl mx-auto">
+                <div class="bg-gradient-to-r from-brand-navy via-slate-900 to-brand-navy rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden border border-brand-coral/30">
+                    <div class="max-w-2xl space-y-4 relative z-10">
+                        <span class="px-3 py-1 rounded-full bg-brand-coral text-white text-xs font-bold">فرص استثمارية واعدة</span>
+                        <h3 class="text-3xl sm:text-4xl font-black">بوابة الاستثمار السياحي في سلطنة عُمان</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            تسهيلات وحوافز للمستثمرين المحليين والدوليين لبناء المشاريع الترفيهية الفاخرة والنزل التراثية والمرافق السياحية المستدامة وفق رؤية 2040.
+                        </p>
+                        <button onclick="openInvestorModal()" class="px-8 py-3.5 rounded-xl bg-brand-coral hover:bg-brand-coral-dark text-white font-bold text-sm shadow-lg transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span>دخول لوحة المستثمرين</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+
+        <!-- ================= PAGE 2: TOURISM COMPANIES (الشركات السياحية) ================= -->
+        <div id="page-companies" class="page-tab py-12 px-4 max-w-7xl mx-auto space-y-8">
+            <!-- Header -->
+            <div class="bg-brand-navy text-white p-8 rounded-3xl space-y-3 relative overflow-hidden">
+                <h2 class="text-3xl font-black">دليل الشركات السياحية المرخصة</h2>
+                <p class="text-slate-300 text-sm">اختر من بين أفضل منظمي الرحلات المعتمدين من وزارة التراث والسياحة لضمان رحلة آمنة وممتازة.</p>
+            </div>
+
+            <!-- Companies List Grid -->
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Company Card 1 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 hover:shadow-md transition-all">
+                    <div class="flex justify-between items-start">
+                        <div class="w-12 h-12 rounded-xl bg-brand-navy/10 text-brand-navy flex items-center justify-center font-bold text-xl">
+                            <i class="fa-solid fa-mountain-sun"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">مرخص رسمياً</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-brand-navy">شركة مغامرات عُمان</h3>
+                    <p class="text-slate-600 text-xs leading-relaxed">متخصصون في جولات رمال الشرقية، التخييم الصحراوي، والتسلق في الجبل الأخضر وجبل شمس.</p>
+                    <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                        <span><i class="fa-solid fa-star text-amber-400"></i> 4.9 (120 تقييم)</span>
+                        <span><i class="fa-solid fa-location-dot text-brand-coral"></i> مسقط</span>
+                    </div>
+                    <button onclick="bookingModal('شركة مغامرات عُمان')" class="w-full py-2.5 rounded-xl bg-brand-navy text-white text-xs font-bold hover:bg-brand-coral transition-colors">حجز جولة سياحية</button>
+                </div>
+
+                <!-- Company Card 2 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 hover:shadow-md transition-all">
+                    <div class="flex justify-between items-start">
+                        <div class="w-12 h-12 rounded-xl bg-brand-navy/10 text-brand-navy flex items-center justify-center font-bold text-xl">
+                            <i class="fa-solid fa-ship"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">مرخص رسمياً</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-brand-navy">مؤسسة البحار الذهبية</h3>
+                    <p class="text-slate-600 text-xs leading-relaxed">رحلات بحرية لمشاهدة الدلافين، الغوص في محمية الجزر الديمانيات، وجولات سفن الخشب التراثية.</p>
+                    <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                        <span><i class="fa-solid fa-star text-amber-400"></i> 4.8 (95 تقييم)</span>
+                        <span><i class="fa-solid fa-location-dot text-brand-coral"></i> السيب / مسقط</span>
+                    </div>
+                    <button onclick="bookingModal('مؤسسة البحار الذهبية')" class="w-full py-2.5 rounded-xl bg-brand-navy text-white text-xs font-bold hover:bg-brand-coral transition-colors">حجز جولة سياحية</button>
+                </div>
+
+                <!-- Company Card 3 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 hover:shadow-md transition-all">
+                    <div class="flex justify-between items-start">
+                        <div class="w-12 h-12 rounded-xl bg-brand-navy/10 text-brand-navy flex items-center justify-center font-bold text-xl">
+                            <i class="fa-solid fa-tree"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">مرخص رسمياً</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-brand-navy">شركة صلالة الخضراء للسياحة</h3>
+                    <p class="text-slate-600 text-xs leading-relaxed">تنظيم برامج متكاملة لموسم خريف ظفار، وادي دربات، وشاطئ المغسيل وحاسك.</p>
+                    <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                        <span><i class="fa-solid fa-star text-amber-400"></i> 5.0 (210 تقييم)</span>
+                        <span><i class="fa-solid fa-location-dot text-brand-coral"></i> صلالة</span>
+                    </div>
+                    <button onclick="bookingModal('شركة صلالة الخضراء')" class="w-full py-2.5 rounded-xl bg-brand-navy text-white text-xs font-bold hover:bg-brand-coral transition-colors">حجز جولة سياحية</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= PAGE 3: TRANSPORTATION (النقل) ================= -->
+        <div id="page-transport" class="page-tab py-12 px-4 max-w-7xl mx-auto space-y-8">
+            <!-- Header -->
+            <div class="bg-brand-navy text-white p-8 rounded-3xl space-y-3">
+                <h2 class="text-3xl font-black">خدمات النقل والمواصلات السياحية</h2>
+                <p class="text-slate-300 text-sm">استأجر مركبك أو احجز مقعدك لتنقل مريح وأمين في جميع أنحاء السلطنة.</p>
+            </div>
+
+            <!-- Transport Types Cards -->
+            <div class="grid md:grid-cols-4 gap-6">
+                
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 text-center">
+                    <div class="w-16 h-16 rounded-full bg-brand-coral/10 text-brand-coral mx-auto flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-car-rear"></i>
+                    </div>
+                    <h3 class="font-bold text-brand-navy text-lg">تأجير سيارات دفع رباعي</h3>
+                    <p class="text-xs text-slate-600">مثالية للرحلات الجبلية والصحراوية مثل الجبل الأخضر ورمال آل وهيبة.</p>
+                    <button onclick="bookingModal('تأجير دفع رباعي')" class="w-full py-2 bg-brand-navy text-white rounded-lg text-xs font-bold hover:bg-brand-coral">طلب حجز</button>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 text-center">
+                    <div class="w-16 h-16 rounded-full bg-brand-coral/10 text-brand-coral mx-auto flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-bus"></i>
+                    </div>
+                    <h3 class="font-bold text-brand-navy text-lg">حافلات المجموعات</h3>
+                    <p class="text-xs text-slate-600">حافلات حديثة ومكيفة للمجموعات والرحلات المدرسية والعائلية.</p>
+                    <button onclick="bookingModal('حافلة سياحية')" class="w-full py-2 bg-brand-navy text-white rounded-lg text-xs font-bold hover:bg-brand-coral">طلب حجز</button>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 text-center">
+                    <div class="w-16 h-16 rounded-full bg-brand-coral/10 text-brand-coral mx-auto flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-taxi"></i>
+                    </div>
+                    <h3 class="font-bold text-brand-navy text-lg">تاكسي المطارات</h3>
+                    <p class="text-xs text-slate-600">خدمة استقبال فورية ومباشرة من مطار مسقط الدولي ومطار صلالة.</p>
+                    <button onclick="bookingModal('تاكسي مطار')" class="w-full py-2 bg-brand-navy text-white rounded-lg text-xs font-bold hover:bg-brand-coral">طلب حجز</button>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 text-center">
+                    <div class="w-16 h-16 rounded-full bg-brand-coral/10 text-brand-coral mx-auto flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-anchor"></i>
+                    </div>
+                    <h3 class="font-bold text-brand-navy text-lg">قوارب ونقل بحري</h3>
+                    <p class="text-xs text-slate-600">عبارات ونقل بحري نحو كمزار، مسندم، وجزر الديمانيات.</p>
+                    <button onclick="bookingModal('نقل بحري')" class="w-full py-2 bg-brand-navy text-white rounded-lg text-xs font-bold hover:bg-brand-coral">طلب حجز</button>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- ================= PAGE 4: TOUR GUIDES (المرشدين السياحيين) ================= -->
+        <div id="page-guides" class="page-tab py-12 px-4 max-w-7xl mx-auto space-y-8">
+            <!-- Header -->
+            <div class="bg-brand-navy text-white p-8 rounded-3xl space-y-3">
+                <h2 class="text-3xl font-black">نخبة المرشدين السياحيين العُمانيين</h2>
+                <p class="text-slate-300 text-sm">تواصل مع مرشدين معتمدين ومحترفين يتحدثون لغات عدة ويملكون معرفة عميقة بالتاريخ والثقافة.</p>
+            </div>
+
+            <!-- Guides Grid -->
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Guide 1 -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-brand-navy text-white font-bold flex items-center justify-center text-xl border-2 border-brand-coral">
+                            س.ال
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-navy">سالم بن عبدالله السيابي</h3>
+                            <p class="text-xs text-brand-coral font-bold"><i class="fa-solid fa-certificate"></i> مرشد مرخص - فئة أ</p>
+                            <p class="text-[11px] text-slate-500">اللغات: العربية، الإنجليزية</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">خبرة 10 سنوات في جولات القلاع الأثرية في الداخلية ومسارات الجبل الأخضر.</p>
+                    <button onclick="bookingModal('المرشد سالم السيابي')" class="w-full py-2 bg-brand-navy text-white rounded-xl text-xs font-bold hover:bg-brand-coral">تواصل وحجز المرشد</button>
+                </div>
+
+                <!-- Guide 2 -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-brand-navy text-white font-bold flex items-center justify-center text-xl border-2 border-brand-coral">
+                            م.الح
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-navy">مريم بنت سعيد الحوسنية</h3>
+                            <p class="text-xs text-brand-coral font-bold"><i class="fa-solid fa-certificate"></i> مرشدة مرخصة - ثقافة وتراث</p>
+                            <p class="text-[11px] text-slate-500">اللغات: العربية، الفرنسية</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">متخصصة في جولات جامع السلطان قابوس الأكبر، الأسواق التراثية، والمتاحف الوطنية.</p>
+                    <button onclick="bookingModal('المرشدة مريم الحوسنية')" class="w-full py-2 bg-brand-navy text-white rounded-xl text-xs font-bold hover:bg-brand-coral">تواصل وحجز المرشدة</button>
+                </div>
+
+                <!-- Guide 3 -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-brand-navy text-white font-bold flex items-center justify-center text-xl border-2 border-brand-coral">
+                            خ.الم
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-navy">خالد بن محمد المعشني</h3>
+                            <p class="text-xs text-brand-coral font-bold"><i class="fa-solid fa-certificate"></i> مرشد مغامرات وجبال</p>
+                            <p class="text-[11px] text-slate-500">اللغات: العربية، الإنجليزية، الألمانية</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">خبير في الاستكشاف الجبلي في محافظة ظفار، وادي دربات، ومسارات المغامرات.</p>
+                    <button onclick="bookingModal('المرشد خالد المعشني')" class="w-full py-2 bg-brand-navy text-white rounded-xl text-xs font-bold hover:bg-brand-coral">تواصل وحجز المرشد</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= PAGE 5: HOTELS, HERITAGE INNS & ARCHAEOLOGY (الفنادق والنزل التراثية والمواقع الأثرية) ================= -->
+        <div id="page-stay-heritage" class="page-tab py-12 px-4 max-w-7xl mx-auto space-y-10">
+            <!-- Header -->
+            <div class="bg-brand-navy text-white p-8 rounded-3xl space-y-3">
+                <h2 class="text-3xl font-black">الفنادق والنزل التراثية والمواقع الأثرية</h2>
+                <p class="text-slate-300 text-sm">اقضِ أوقاتاً ساحرة في أحضان التاريخ العُماني واكتشف القلاع والحصون الشامخة.</p>
+            </div>
+
+            <!-- Section A: Heritage Inns & Hotels -->
+            <div class="space-y-4">
+                <h3 class="text-2xl font-bold text-brand-navy flex items-center gap-2">
+                    <i class="fa-solid fa-hotel text-brand-coral"></i>
+                    <span>النزل التراثية والفنادق الأصيلة</span>
+                </h3>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm space-y-3">
+                        <div class="h-48 bg-slate-200 relative">
+                            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80" alt="نزل مسفاة العبريين" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/1A3644/ffffff?text=نزل+تراثي'">
+                            <span class="absolute top-3 right-3 px-3 py-1 rounded-full bg-brand-coral text-white text-xs font-bold">نزل تراثي معتمد</span>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            <h4 class="font-bold text-brand-navy text-lg">نزل مسفاة العبريين التراثي</h4>
+                            <p class="text-xs text-slate-600">إقامة داخل بيوت طينية قديمة محاطة بمزارع النخيل والأفلاج في ولاية الحمراء.</p>
+                            <div class="flex justify-between items-center text-xs font-bold text-brand-navy pt-2">
+                                <span>ابتداءً من 35 ر.ع / ليلة</span>
+                                <button onclick="bookingModal('نزل مسفاة العبريين')" class="px-4 py-1.5 rounded-lg bg-brand-navy text-white hover:bg-brand-coral">حجز غرفة</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm space-y-3">
+                        <div class="h-48 bg-slate-200 relative">
+                            <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&auto=format&fit=crop&q=80" alt="منتجع الجبل الأخضر" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/1A3644/ffffff?text=منتجع+الجبل'">
+                            <span class="absolute top-3 right-3 px-3 py-1 rounded-full bg-brand-navy text-white text-xs font-bold">فاخر 5 نجوم</span>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            <h4 class="font-bold text-brand-navy text-lg">منتجع الجبل الأخضر</h4>
+                            <p class="text-xs text-slate-600">إطلالة باردة وساحرة على الهضاب الجبلية والمدرجات الزراعية الورديّة.</p>
+                            <div class="flex justify-between items-center text-xs font-bold text-brand-navy pt-2">
+                                <span>ابتداءً من 95 ر.ع / ليلة</span>
+                                <button onclick="bookingModal('منتجع الجبل الأخضر')" class="px-4 py-1.5 rounded-lg bg-brand-navy text-white hover:bg-brand-coral">حجز جناح</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm space-y-3">
+                        <div class="h-48 bg-slate-200 relative">
+                            <img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600&auto=format&fit=crop&q=80" alt="مخيم الصحراء التراثي" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/1A3644/ffffff?text=مخيم+صحراوي'">
+                            <span class="absolute top-3 right-3 px-3 py-1 rounded-full bg-brand-coral text-white text-xs font-bold">مخيم تراثي</span>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            <h4 class="font-bold text-brand-navy text-lg">مخيم ليالي بدية الصحراوي</h4>
+                            <p class="text-xs text-slate-600">خيم بدوية مجهزة بأسلوب ضيافة أصيل تحت النجوم في رمال الشرقية.</p>
+                            <div class="flex justify-between items-center text-xs font-bold text-brand-navy pt-2">
+                                <span>ابتداءً من 45 ر.ع / ليلة</span>
+                                <button onclick="bookingModal('مخيم ليالي بدية')" class="px-4 py-1.5 rounded-lg bg-brand-navy text-white hover:bg-brand-coral">حجز مخيم</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section B: Archaeological Sites & Forts -->
+            <div class="space-y-4 pt-6">
+                <h3 class="text-2xl font-bold text-brand-navy flex items-center gap-2">
+                    <i class="fa-solid fa-fort-awesome text-brand-coral"></i>
+                    <span>أهم القلاع والمواقع الأثرية</span>
+                </h3>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                        <span class="text-xs font-bold text-brand-coral">اليونسكو للتراث العالمي</span>
+                        <h4 class="font-bold text-lg text-brand-navy">قلعة بهلاء</h4>
+                        <p class="text-xs text-slate-600">أول موقع عُماني يُدرج ضمن قائمة التراث العالمي، وتتميز بسورها التاريخي العظيم.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                        <span class="text-xs font-bold text-brand-coral">الداخلية - نزوى</span>
+                        <h4 class="font-bold text-lg text-brand-navy">قلعة نزوى (الشهباء)</h4>
+                        <p class="text-xs text-slate-600">تتميز برجها الدائري الضخم ومتحفها الذي يعرض التاريخ التليد لولاية نزوى.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                        <span class="text-xs font-bold text-brand-coral">جنوب الباطنة</span>
+                        <h4 class="font-bold text-lg text-brand-navy">قلعة نخل</h4>
+                        <p class="text-xs text-slate-600">تقع على ربوة جبلية مرتفعة مطلة على مزارع النخيل وعين الثوارة الكبريتية.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-2">
+                        <span class="text-xs font-bold text-brand-coral">الداخلية - بهلاء</span>
+                        <h4 class="font-bold text-lg text-brand-navy">حصن جبرين</h4>
+                        <p class="text-xs text-slate-600">تحفة هندسية ومعمارية مشهورة بسقوفها المنقوشة بآيات قرآنية وزخارف مائية ساحرة.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER (تذييل الصفحة) -->
+    <footer class="bg-brand-navy text-white pt-12 pb-8 border-t-4 border-brand-coral">
+        <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-8 mb-8 text-right">
+            
+            <!-- Brand Column -->
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-brand-coral p-1 flex items-center justify-center">
+                        <svg viewBox="0 0 500 500" class="w-full h-full">
+                            <path d="M 60,330 L 110,240 L 160,330 Z" fill="#ffffff" />
+                            <path d="M 120,330 L 220,160 L 275,255 L 235,255 L 205,205 L 150,300 L 205,300 L 185,330 Z" fill="#ffffff" />
+                            <path d="M 235,330 L 335,160 L 445,160 L 445,220 L 365,220 L 365,265 L 445,265 L 445,330 L 340,330 L 290,250 L 245,330 Z" fill="#ffffff" />
+                        </svg>
+                    </div>
+                    <span class="text-2xl font-black tracking-wide">اكتشف عُمان</span>
+                </div>
+                <p class="text-slate-300 text-xs leading-relaxed">
+                    بوابتك نحو استكشاف جمال وأصالة سلطنة عُمان. مشكّلة وفق أهداف رؤية عُمان 2040 لتعزيز التراث والسياحة المستدامة.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="space-y-3">
+                <h4 class="font-bold text-brand-coral text-sm">أقسام المنصة</h4>
+                <ul class="space-y-2 text-xs text-slate-300">
+                    <li><a href="#" onclick="switchPage('home')" class="hover:text-brand-coral transition-colors">الصفحة الرئيسية</a></li>
+                    <li><a href="#" onclick="switchPage('companies')" class="hover:text-brand-coral transition-colors">الشركات السياحية</a></li>
+                    <li><a href="#" onclick="switchPage('transport')" class="hover:text-brand-coral transition-colors">النقل والمواصلات</a></li>
+                    <li><a href="#" onclick="switchPage('guides')" class="hover:text-brand-coral transition-colors">المرشدين السياحيين</a></li>
+                    <li><a href="#" onclick="switchPage('stay-heritage')" class="hover:text-brand-coral transition-colors">الفنادق والآثار</a></li>
+                </ul>
+            </div>
+
+            <!-- Institutional Partners -->
+            <div class="space-y-3">
+                <h4 class="font-bold text-brand-coral text-sm">شركاء النجاح</h4>
+                <ul class="space-y-2 text-xs text-slate-300">
+                    <li>وزارة التراث والسياحة</li>
+                    <li>رؤية عُمان 2040</li>
+                    <li>تطبيق مَرْحَبْ السياحي</li>
+                    <li>طيران السلام والعُمانية</li>
+                </ul>
+            </div>
+
+            <!-- Contact & Social -->
+            <div class="space-y-3">
+                <h4 class="font-bold text-brand-coral text-sm">التواصل والدعم</h4>
+                <p class="text-xs text-slate-300"><i class="fa-solid fa-envelope text-brand-coral ml-2"></i> info@tourism.om</p>
+                <p class="text-xs text-slate-300"><i class="fa-solid fa-phone text-brand-coral ml-2"></i> 800-77777 (مجاني)</p>
+                <p class="text-xs text-slate-300"><i class="fa-solid fa-location-dot text-brand-coral ml-2"></i> مسقط، سلطنة عُمان</p>
+                
+                <div class="flex gap-3 pt-2 text-slate-300 text-base">
+                    <a href="#" class="hover:text-brand-coral"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" class="hover:text-brand-coral"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="hover:text-brand-coral"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="border-t border-white/10 pt-4 text-center text-xs text-slate-400">
+            مشروع مدرسي متكامل لـ "بوابة السياحة العُمانية" © <span id="year"></span> | جميع الحقوق محفوظة
+        </div>
+    </footer>
+
+
+    <!-- ================= MODAL 1: INVESTOR PORTAL (لوحة المستثمرين) ================= -->
+    <div id="investorModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeInvestorModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold hover:bg-brand-coral hover:text-white transition-colors">✕</button>
+
+            <div class="space-y-2 text-right">
+                <span class="px-3 py-1 rounded-full bg-brand-coral/10 text-brand-coral text-xs font-bold">لوحة المستثمرين الرسمية</span>
+                <h3 class="text-2xl font-black text-brand-navy">الفرص الاستثمارية في السياحة العُمانية</h3>
+                <p class="text-xs text-slate-600">بوابة تقديم الطلبات الاستثمارية وتتبع النمو في القطاع السياحي بالسلطنة.</p>
+            </div>
+
+            <!-- Stats Overview Grid -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span class="block text-lg font-black text-brand-navy">1.2 مليار ر.ع</span>
+                    <span class="text-[10px] text-slate-500">حجم الاستثمارات المخططة</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span class="block text-lg font-black text-brand-coral">+15%</span>
+                    <span class="text-[10px] text-slate-500">معدل النمو السنوي</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span class="block text-lg font-black text-emerald-600">حوافز 100%</span>
+                    <span class="text-[10px] text-slate-500">اعفاءات ضريبية متدرجة</span>
+                </div>
+            </div>
+
+            <!-- Application Form -->
+            <form onsubmit="handleFormSubmit(event)" class="space-y-4 text-right">
+                <h4 class="font-bold text-sm text-brand-navy">تقديم طلب استثماري جديد:</h4>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <input type="text" required placeholder="اسم المستثمر / الشركة" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                    <input type="email" required placeholder="البريد الإلكتروني" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                </div>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <select required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                        <option value="">نوع المشروع المرغوب</option>
+                        <option>نزل تراثي / بيئي</option>
+                        <option>منتجع شاطئي أو جبلي</option>
+                        <option>مشروع ترفيهي وسياحي</option>
+                        <option>خدمات النقل والمغامرات</option>
+                    </select>
+                    <input type="number" required placeholder="حجم الاستثمار المقدر (ر.ع)" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-brand-coral hover:bg-brand-coral-dark text-white font-bold text-xs shadow-lg transition-all">إرسال طلب الاستثمار</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================= MODAL 2: GENERAL BOOKING MODAL ================= -->
+    <div id="bookingModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-6 relative">
+            <button onclick="closeBookingModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold hover:bg-brand-coral hover:text-white transition-colors">✕</button>
+
+            <div class="space-y-1 text-right">
+                <h3 class="text-xl font-black text-brand-navy" id="bookingModalTitle">حجز خدمة سياحية</h3>
+                <p class="text-xs text-slate-600">سيتم ربط طلبك مباشرة بالجهة المزودة للخدمة.</p>
+            </div>
+
+            <form onsubmit="handleFormSubmit(event)" class="space-y-4 text-right">
+                <div>
+                    <label class="block text-xs font-bold mb-1">الاسم الثلاثي</label>
+                    <input type="text" required placeholder="أدخل اسمك" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">رقم الهاتف / الواتساب</label>
+                    <input type="tel" required placeholder="+968 XXXXXXXX" class="w-full px-4 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">تاريخ الرحلة / الحجز</label>
+                    <input type="date" required class="w-full px-4 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-coral">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-brand-navy hover:bg-brand-coral text-white font-bold text-xs shadow-lg transition-all">تأكيد طلب الحجز</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Set Current Year in Footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Mobile Nav Toggle
+        const mobileBtn = document.getElementById('mobileMenuToggle');
+        const mobileDropdown = document.getElementById('mobileDropdown');
+        mobileBtn.addEventListener('click', () => {
+            mobileDropdown.classList.toggle('hidden');
+        });
+
+        // Dynamic 5-Page Switcher Function
+        function switchPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected page
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            // Update Nav Active State
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-coral', 'text-white', 'font-bold');
+                btn.classList.add('hover:bg-white/10', 'text-slate-200');
+            });
+            const activeNavBtn = document.getElementById(`nav-${pageId}`);
+            if (activeNavBtn) {
+                activeNavBtn.classList.add('bg-brand-coral', 'text-white', 'font-bold');
+                activeNavBtn.classList.remove('hover:bg-white/10', 'text-slate-200');
+            }
+
+            // Hide mobile dropdown if open
+            mobileDropdown.classList.add('hidden');
+
+            // Scroll smoothly to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Invalidate Leaflet Map size when returning to home tab
+            if(pageId === 'home' && map) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 300);
+            }
+        }
+
+        // Modal Handlers
+        function openInvestorModal() {
+            document.getElementById('investorModal').classList.remove('hidden');
+        }
+        function closeInvestorModal() {
+            document.getElementById('investorModal').classList.add('hidden');
+        }
+
+        function bookingModal(serviceName) {
+            document.getElementById('bookingModalTitle').textContent = `حجز: ${serviceName}`;
+            document.getElementById('bookingModal').classList.remove('hidden');
+        }
+        function closeBookingModal() {
+            document.getElementById('bookingModal').classList.add('hidden');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            alert('تم استلام طلبك بنجاح! سيقوم الفريق المختص بالتواصل معك في أقرب وقت ممكن.');
+            closeInvestorModal();
+            closeBookingModal();
+        }
+
+        // Initialize Interactive Leaflet Map of Oman
+        let map;
+        window.onload = function() {
+            // Oman Centered Lat/Lng
+            map = L.map('omanMap').setView([21.5126, 55.9233], 6);
+
+            // OpenStreetMap Tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '© خريطة سلطنة عُمان السياحية'
+            }).addTo(map);
+
+            // Pins Data for Key Omani Regions
+            const omanLocations = [
+                { name: "مسقط - العاصمة", lat: 23.5880, lng: 58.3829, desc: "جامع السلطان قابوس، سوق مطرح، والمتحف الوطني." },
+                { name: "صلالة - ظفار", lat: 17.0151, lng: 54.0924, desc: "شلالات وادي دربات، شاطئ المغسيل، وموسم الخريف." },
+                { name: "نزوى - الداخلية", lat: 22.9333, lng: 57.5333, desc: "قلعة نزوى الشهباء، وسوق الفخاريات والحرف التراثية." },
+                { name: "خصب - مسندم", lat: 26.1798, lng: 56.2477, desc: "مضايق مسندم البحرية، وركوب السفن التقليدية." },
+                { name: "رمال الشرقية - بدية", lat: 22.3667, lng: 58.8333, desc: "التخييم الصحراوي وركوب الجمال وسيور الرمال." },
+                { name: "صور - جنوب الشرقية", lat: 22.5667, lng: 59.5289, desc: "صناعة السفن الخشبية ومحمية راس الجنز للسلاحف." },
+                { name: "الجبل الأخضر", lat: 23.0692, lng: 57.6681, desc: "المدرجات الزراعية، قطاف الورد، والطقس البارد." }
+            ];
+
+            // Add Custom Markers
+            omanLocations.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+                marker.bindPopup(`
+                    <div style="text-align: right;">
+                        <h4 style="font-weight: bold; color: #E05A47; margin-bottom: 4px;">${loc.name}</h4>
+                        <p style="font-size: 11px; margin: 0;">${loc.desc}</p>
+                    </div>
+                `);
+            });
+        }
+    </script>
+</body>
+</html>
